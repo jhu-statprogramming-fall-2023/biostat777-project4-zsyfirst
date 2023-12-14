@@ -1,0 +1,119 @@
+---
+title: "Untitled"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library('flexdashboard')
+library('here')
+library('ggplot2')
+library("tidytuesdayR")
+library("tidyverse")
+knitr::opts_chunk$set(fig.width = 5, fig.asp = 1/3)
+```
+
+```{r}
+# tests if a directory named "data" exists locally
+if (!dir.exists(here("data"))) {
+    dir.create(here("data"))
+}
+
+if (!file.exists(here("data", "tuesdata_earn.RDS"))) {
+    tuesdata <- tidytuesdayR::tt_load("2021-02-23")
+    earn <- tuesdata$earn
+    # save the files to RDS objects
+    saveRDS(tuesdata$earn, file = here("data", "tuesdata_earn.RDS"))
+}
+
+earn <- readRDS(here("data", "tuesdata_earn.RDS"))
+
+```
+
+```{r}
+earn_clean <- earn %>%
+      select(sex, race, age, year, median_weekly_earn) %>%
+      mutate(
+            sex_group = factor(sex, levels = c("Both Sexes", "Men", "Women") , labels = c(0, 1, 2))
+      )  %>%
+      mutate(Race_group = factor(race, levels = c("All Races", "Asian", "Black or African American","White") , labels = c(0, 1, 2, 3) ))
+
+adults_earn_race <- earn_clean %>%
+      group_by( race, year) %>% 
+      summarise(
+            year_earn = sum(median_weekly_earn)
+      )  %>%
+      arrange(year, .by_group = TRUE)
+
+adults_earn_sex <- earn_clean %>%
+      group_by( sex_group, year) %>% 
+      summarise(
+            year_earn = sum(median_weekly_earn)
+      ) %>%
+      arrange(desc(year), .by_group = TRUE)
+
+```
+
+## Column {data-width=650}
+
+### Chart A
+
+```{r}
+adults_earn_sex %>%
+      ggplot( aes(year, year_earn, color = sex_group))  +
+      geom_boxplot(stat = "boxplot", position = "dodge2" ) +
+      labs(
+            title = "Median weekly earning by sex over time",
+            subtitle = "Increasing trend of weekly earning from 2010 to 2020",
+            caption = "Siyu Zou",
+            y = "Median weekly earning (Current dollars)",
+            x = "Time (Year)"
+      ) +
+      scale_x_continuous(breaks = seq(2010, 2020, 1), labels = seq(2010, 2020, 1) ) +
+      theme_minimal() +
+      theme(
+          plot.title = element_text(hjust = 0.5, face = "bold", size = 11),
+          plot.subtitle = element_text(hjust = 0.5, color = "darkblue", face = "italic", size = 9),
+          axis.title = element_text(color = "black", size = 8),
+          axis.text = element_text(color = "black", size = 8)
+      )
+```
+
+
+### Chart B
+
+```{r}
+adults_earn_race %>%
+      ggplot( aes(year, year_earn, color = race))  +
+      geom_smooth(stat = "smooth", position = "identity", method = "lm") +
+      labs(
+            title = "Median weekly earning by race over time",
+            subtitle = "Increasing trend of weekly earning from 2010 to 2020",
+            caption = "Siyu Zou",
+            y = "Median weekly earning (Current dollars)",
+            x = "Time (Year)"
+      ) +
+      scale_x_continuous(breaks = seq(2010, 2020, 1), labels = seq(2010, 2020, 1) ) +
+      theme_minimal() +
+      theme(
+          plot.title = element_text(hjust = 0.5, face = "bold", size = 11),
+          plot.subtitle = element_text(hjust = 0.5, color = "darkblue", face = "italic", size = 9),
+          axis.title = element_text(color = "black", size = 8),
+          axis.text = element_text(color = "black", size = 8)
+      )
+```
+
+## Column {data-width=350}
+
+### The year that people earn highest
+
+```{r}
+adults_earn_sex %>% 
+  arrange(desc(year_earn)) %>% 
+  head(100) %>% 
+  select(year_earn, year, sex_group) %>% 
+  DT::datatable()
+```
+
