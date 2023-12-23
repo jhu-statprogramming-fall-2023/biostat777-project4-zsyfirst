@@ -19,7 +19,7 @@ library("shiny")
 library("showtext")
 ```
 
-```{r}
+```{r, echo=FALSE}
 # tests if a directory named "data" exists locally
 if (!dir.exists(here("data"))) {
     dir.create(here("data"))
@@ -109,6 +109,12 @@ Siyu Zou. The project code could be found in [Github](https://github.com/zsyfirs
 ## Column 
 
 ### **A video explaining this dashboard**
+
+<iframe width="720" height="480" src="https://www.youtube.com/embed/JwSE-oPeFWA" frameborder="0" 
+allowfullscreen
+>
+</iframe>
+
 
 
 # The Data 
